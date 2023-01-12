@@ -1,6 +1,19 @@
 /* this is a JS file because we are not returning any JSX element. */
 import { initializeApp } from 'firebase/app';
-import {getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged} from 'firebase/auth';
+import {
+    getAuth,
+    signInWithPopup,
+    signInWithRedirect,
+    GoogleAuthProvider,
+} from 'firebase/auth';
+
+
+import {
+    doc,
+    getDoc,
+    setDoc,
+    getFirestore,
+} from 'firebase/firestore';
 
 
 // Your web app's Firebase configuration
@@ -30,3 +43,32 @@ provider.setCustomParameters({
 
 export const auth = getAuth(); // retrieves the current authentication of the user.
 export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+
+export const db = getFirestore();
+
+export const createUserDocumentfromAuth = async (userAuth) => {
+    const userDocRef = doc(db, 'users', userAuth.uid);
+    console.log(userDocRef);
+
+    const userSnapshot = await getDoc(userDocRef);
+    console.log(userSnapshot);
+    console.log(userSnapshot.exists());
+
+    if (!userSnapshot.exists()){
+        // we wille extract the displayname and email from the userAuth.
+        const {displayName, email} = userAuth;
+        const createdAt = new Date();
+
+        try{
+            // set the doc with this object
+            await setDoc(userDocRef, {
+                displayName,
+                email,
+                createdAt
+            });
+        }catch (error){
+            console.log('There was an error creating the user', error.message)
+        }
+    }
+    return userDocRef;
+}
